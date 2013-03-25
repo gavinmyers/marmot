@@ -59,24 +59,24 @@ func index(w http.ResponseWriter, r *http.Request) {
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	fmt.Fprint(w, string(body))
-	err = c.Send("SMEMBERS", "myset")
-	err = c.Send("get", "payload")
+  //err = c.Send("SMEMBERS", "myset")
+	// err = c.Send("get", "foo")
+	err = c.Send("get","foo")
 	if err != nil {
 		fmt.Println(err)
 	}
 	c.Flush()
 	// both give the same return value!?!?
 	// reply, err := c.Receive()
-	reply, err := redis.MultiBulk(c.Receive())
+	//reply, err := redis.MultiBulk(c.Receive())
+	// reply, err := redis.String(c.Receive())
+  payload, err := redis.Bytes(c.Do("GET", "payload"))
 	if err != nil {
 		fmt.Println(err)
 	}
-	for _, x := range reply {
-		var v, ok = x.([]byte)
-		if ok {
-			fmt.Println(string(v))
-		}
-	}
+  var m Payload 
+  err = json.Unmarshal(payload, &m)
+  fmt.Println(m.Repository.Owner.Email)
 	//fmt.Printf("%#v\n", reply)
 }
 

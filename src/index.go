@@ -10,21 +10,23 @@ import (
 )
 
 type Payload struct {
-	Forced     bool
+  Before string
+  After string
+  Ref string
+  Commits []struct {
+    Id string
+    Message string
+    Url string
+    Timestamp string
+  }
 	Repository struct {
-		Private bool
 		Owner   struct {
 			Email         string
 			Name          string
-			Has_downloads bool
-			Stargazers    int
-			Id            string
-			Watchers      int
-			Master_branch string
-			Has_wiki      bool
-			Description   string
-			Fork          bool
-		}
+    }
+    Description string
+    Name string
+    Url string
 	}
 }
 
@@ -77,6 +79,7 @@ func index(w http.ResponseWriter, r *http.Request) {
 	var m Payload
 	err = json.Unmarshal(payload, &m)
 	fmt.Println(m.Repository.Owner.Email)
+	fmt.Println(m)
 	//fmt.Printf("%#v\n", reply)
 }
 

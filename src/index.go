@@ -10,23 +10,23 @@ import (
 )
 
 type Payload struct {
-  Before string
-  After string
-  Ref string
-  Commits []struct {
-    Id string
-    Message string
-    Url string
-    Timestamp string
-  }
+	Before  string
+	After   string
+	Ref     string
+	Commits []struct {
+		Id        string
+		Message   string
+		Url       string
+		Timestamp string
+	}
 	Repository struct {
-		Owner   struct {
-			Email         string
-			Name          string
-    }
-    Description string
-    Name string
-    Url string
+		Owner struct {
+			Email string
+			Name  string
+		}
+		Description string
+		Name        string
+		Url         string
 	}
 }
 

@@ -1,10 +1,12 @@
 package main
 
 import (
+  "crypto/md5"
 	"encoding/json"
 	"fmt"
 	"github.com/garyburd/redigo/redis"
 	"io/ioutil"
+  "io"
 	"log"
 	"net/http"
 )
@@ -79,7 +81,13 @@ func index(w http.ResponseWriter, r *http.Request) {
 	var m Payload
 	err = json.Unmarshal(payload, &m)
 	fmt.Println(m.Repository.Owner.Email)
-	fmt.Println(m)
+	fmt.Println(m.Repository.Url)
+  h := md5.New()
+  io.WriteString(h,m.Repository.Url) 
+  var hsh = fmt.Sprintf("%x", h.Sum(nil)) 
+	err = c.Send("set", hsh, m.Repository.Url)
+	c.Flush()
+	//fmt.Println(m)
 	//fmt.Printf("%#v\n", reply)
 }
 

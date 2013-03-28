@@ -13,36 +13,29 @@ func hash(in string) string {
   return hsh
 }
 
-func dial() redis.Conn {
+func open() redis.Conn {
   r, err := redis.Dial("tcp", ":6379")
   if err != nil {
  	  fmt.Println(err)
   }
   return r 
 }
-func get(r redis.Conn, k string) string {
-	reply, err := redis.String(r.Do("GET", k))
-  if err != nil {
- 	  fmt.Println(err)
-  }
-  return reply
-}
 
 func clean() {
-  var r = dial()
+  var r = open()
   r.Do("flushdb")
   r.Flush()
 }
 
 func install(site string) {
   fmt.Println("hi")
-  var r = dial()
+  var r = open()
   r.Send("hset", "sites", hash(site), site)
   r.Flush()
 }
 
 func repo(site string) string {
-  var r = dial()
+  var r = open()
 	surl, err := redis.String(r.Do("HGET", "sites", hash(site)))
 	if err != nil {
 		fmt.Println(err)
@@ -53,15 +46,15 @@ func repo(site string) string {
 
 func main() {
   clean()
-  install("gavinm.com")
-  repo("gavinm.com")
-  var r = dial()
+  install("https://github.com/gavinmyers/blog")
+  repo("https://github.com/gavinmyers/blog")
+/*  var r = open()
   r.Send("SADD", "test_set", "foo")
 	r.Send("set","gavin","123") 
 	r.Send("SMEMBERS", "test_set")
 	r.Flush()
   r.Receive()
-  fmt.Println(repo("gavinm.com"))
+  fmt.Println(repo("gavinm.com")) */
 }
 func GitHandler() {
 }

@@ -70,7 +70,7 @@ func repository(site string) string {
 	var r = open()
 	surl, err := redis.String(r.Do("HGET", "sites", hash(site)))
 	if err != nil {
-    fmt.Println("repository")
+		fmt.Println("repository")
 		fmt.Println(err)
 	}
 	return surl
@@ -85,13 +85,13 @@ func url(repo string, action string, v interface{}) interface{} {
 	buffer.WriteString(action)
 	res, err := http.Get(buffer.String())
 	if err != nil {
-    fmt.Println("url")
+		fmt.Println("url")
 		fmt.Println(err)
 	}
 	defer res.Body.Close()
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-    fmt.Println("url")
+		fmt.Println("url")
 		fmt.Println(err)
 	}
 	return json.Unmarshal(body, &v)
@@ -101,23 +101,23 @@ func gitFile(repo string, path string, v interface{}) interface{} {
 	var r = open()
 	var buffer bytes.Buffer
 	buffer.WriteString(hash(repo))
-  buffer.WriteString(":content")
-	scontent, err := redis.String(r.Do("hget",  buffer.String(), hash(path)))
-  r.Flush()
+	buffer.WriteString(":content")
+	scontent, err := redis.String(r.Do("hget", buffer.String(), hash(path)))
+	r.Flush()
 	if err != nil {
 		fmt.Println(err)
 	}
-  if(scontent != "") {
-	  return decode(scontent, &v)
-  } else {
-	  var file GitFile
-	  url(repo, path, &file)
-    r = open()
-    r.Send("hset", buffer.String(), hash(path), file.Content)
-    r.Flush()
-	  return decode(file.Content, &v)
-  }
-  return nil
+	if scontent != "" {
+		return decode(scontent, &v)
+	} else {
+		var file GitFile
+		url(repo, path, &file)
+		r = open()
+		r.Send("hset", buffer.String(), hash(path), file.Content)
+		r.Flush()
+		return decode(file.Content, &v)
+	}
+	return nil
 }
 
 func main() {

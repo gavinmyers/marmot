@@ -154,19 +154,6 @@ func main() {
 		return decodeStr(gitFile(repo, val))
 	})
 	web.Run(config.Url)
-	//http.HandleFunc("/favicon.ico", NilHandler)
-	/*http.HandleFunc("/contents/marmot.json", 
-	  func(w http.ResponseWriter, r *http.Request) {
-	    fmt.Fprintf(w,config.Description) 
-	  })*/
-	//http.ListenAndServe(config.Url, nil)
-	/*  var r = open()
-	  r.Send("SADD", "test_set", "foo")
-		r.Send("set","gavin","123") 
-		r.Send("SMEMBERS", "test_set")
-		r.Flush()
-	  r.Receive()
-	  fmt.Println(repo("gavinm.com")) */
 }
 func GitHandler(w http.ResponseWriter, r *http.Request) {
 }

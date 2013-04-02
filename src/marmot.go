@@ -167,8 +167,7 @@ func main() {
 	web.Get("/(.*)", func(val string) string {
 		return decodeStr(gitFile(repo, val))
 	})
-	//web.Run(config.Url)
-  web.Run("unstable.gavinm.com:8080")
+	web.Run(config.Url)
 }
 func GitHandler(w http.ResponseWriter, r *http.Request) {
 }

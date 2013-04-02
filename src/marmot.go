@@ -81,19 +81,33 @@ func repository(site string) string {
 	var r = open()
 	surl, err := redis.String(r.Do("HGET", "sites", hash(site)))
 	if err != nil {
-		fmt.Println("repository")
 		fmt.Println(err)
 	}
 	return surl
 }
 
 func url(repo string, action string, v interface{}) interface{} {
-	//https://api.github.com/repos/gavinmyers/blog/contents/
+	var r = open()
+
+	client_id, err := redis.String(r.Do("GET", "client_id"))
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	client_secret, err := redis.String(r.Do("GET", "client_secret"))
+	if err != nil {
+		fmt.Println(err)
+	}
+
 	var buffer bytes.Buffer
 	buffer.WriteString("https://api.github.com/repos/")
 	buffer.WriteString(repo)
 	buffer.WriteString("/")
 	buffer.WriteString(action)
+	buffer.WriteString("?client_id=")
+	buffer.WriteString(client_id)
+	buffer.WriteString("&client_secret=")
+	buffer.WriteString(client_secret)
 	res, err := http.Get(buffer.String())
 	if err != nil {
 		fmt.Println("url")
@@ -105,6 +119,7 @@ func url(repo string, action string, v interface{}) interface{} {
 		fmt.Println("url")
 		fmt.Println(err)
 	}
+  fmt.Println(string(body))
 	return json.Unmarshal(body, &v)
 }
 
@@ -113,6 +128,7 @@ func gitFile(repo string, path string) string {
 		path = "index.html"
 	}
 	path = "contents/" + path
+	fmt.Println(path)
 	var r = open()
 	var buffer bytes.Buffer
 	buffer.WriteString(hash(repo))
@@ -128,7 +144,6 @@ func gitFile(repo string, path string) string {
 	} else {
 		var file GitFile
 		url(repo, path, &file)
-		fmt.Println(path)
 		fmt.Println(file)
 		r = open()
 		r.Send("hset", buffer.String(), hash(path), file.Content)
@@ -149,11 +164,11 @@ func main() {
 	//get the marmot file
 	var config Config
 	gitJson(repo, "marmot.json", &config)
-	fmt.Println(config.Url)
 	web.Get("/(.*)", func(val string) string {
 		return decodeStr(gitFile(repo, val))
 	})
-	web.Run(config.Url)
+	//web.Run(config.Url)
+  web.Run("unstable.gavinm.com:8080")
 }
 func GitHandler(w http.ResponseWriter, r *http.Request) {
 }

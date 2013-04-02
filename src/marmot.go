@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/garyburd/redigo/redis"
+	"github.com/hoisie/web"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -34,6 +35,16 @@ func hash(in string) string {
 	io.WriteString(h, in)
 	var hsh = fmt.Sprintf("%x", h.Sum(nil))
 	return hsh
+}
+
+func decodeStr(str string) string {
+	enc := []byte(str)
+	e64 := base64.StdEncoding
+	maxDecLen := e64.DecodedLen(len(enc))
+	var decBuf = make([]byte, maxDecLen)
+	n, err := e64.Decode(decBuf, enc)
+	_ = err
+	return string(decBuf[0:n])
 }
 
 func decode(str string, v interface{}) interface{} {
@@ -97,7 +108,11 @@ func url(repo string, action string, v interface{}) interface{} {
 	return json.Unmarshal(body, &v)
 }
 
-func gitFile(repo string, path string, v interface{}) interface{} {
+func gitFile(repo string, path string) string {
+	if path == "" {
+		path = "index.html"
+	}
+	path = "contents/" + path
 	var r = open()
 	var buffer bytes.Buffer
 	buffer.WriteString(hash(repo))
@@ -108,16 +123,23 @@ func gitFile(repo string, path string, v interface{}) interface{} {
 		fmt.Println(err)
 	}
 	if scontent != "" {
-		return decode(scontent, &v)
+		fmt.Println("scontent came back as " + scontent)
+		return scontent
 	} else {
 		var file GitFile
 		url(repo, path, &file)
+		fmt.Println(path)
+		fmt.Println(file)
 		r = open()
 		r.Send("hset", buffer.String(), hash(path), file.Content)
 		r.Flush()
-		return decode(file.Content, &v)
+		return file.Content
 	}
-	return nil
+	return ""
+}
+
+func gitJson(repo string, path string, v interface{}) interface{} {
+	return decode(gitFile(repo, path), &v)
 }
 
 func main() {
@@ -126,10 +148,18 @@ func main() {
 	var repo = repository("gavinmyers/blog")
 	//get the marmot file
 	var config Config
-	gitFile(repo, "contents/marmot.json", &config)
+	gitJson(repo, "marmot.json", &config)
 	fmt.Println(config.Url)
-	http.HandleFunc("/favicon.ico", NilHandler)
-	http.ListenAndServe(config.Url, nil)
+	web.Get("/(.*)", func(val string) string {
+		return decodeStr(gitFile(repo, val))
+	})
+	web.Run(config.Url)
+	//http.HandleFunc("/favicon.ico", NilHandler)
+	/*http.HandleFunc("/contents/marmot.json", 
+	  func(w http.ResponseWriter, r *http.Request) {
+	    fmt.Fprintf(w,config.Description) 
+	  })*/
+	//http.ListenAndServe(config.Url, nil)
 	/*  var r = open()
 	  r.Send("SADD", "test_set", "foo")
 		r.Send("set","gavin","123") 

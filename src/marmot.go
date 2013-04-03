@@ -5,12 +5,12 @@ import (
 	"crypto/md5"
 	"encoding/base64"
 	"encoding/json"
+  "net/http"
 	"fmt"
 	"github.com/garyburd/redigo/redis"
 	"github.com/hoisie/web"
 	"io"
 	"io/ioutil"
-	"net/http"
 )
 
 type GitFile struct {
@@ -164,10 +164,15 @@ func main() {
 	//get the marmot file
 	var config Config
 	gitJson(repo, "marmot.json", &config)
-	web.Get("/(.*)", func(val string) string {
-		return decodeStr(gitFile(repo, val))
+	//web.Get("/(.*)", func(val string) string {
+//		return decodeStr(gitFile(repo, val))
+//	})
+	web.Post("/(.*)",func(ctx *web.Context, name string) string { 
+    fmt.Println(ctx)
+    return "test"
 	})
 	web.Run(config.Url)
+  //http.ListenAndServe("unstable.gavinm.com:8080", nil)
 }
 func GitHandler(w http.ResponseWriter, r *http.Request) {
 }

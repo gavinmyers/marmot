@@ -120,9 +120,6 @@ func pullFile(repo string, path string) string {
 		path = "index.html"
 	}
 	path = "contents/" + path
-	fmt.Println(repo)
-	fmt.Println(path)
-	fmt.Println(hash(path))
 	var r = open()
 	var file GitFile
 	var buffer bytes.Buffer
@@ -184,7 +181,7 @@ func main() {
 				pullFile(repo, removed)
 			}
 			for _, added := range commit.Added {
-				fmt.Println(added)
+				pullFile(repo, added)
 			}
 		}
 		return ""

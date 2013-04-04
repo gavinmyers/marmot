@@ -2,17 +2,17 @@ package main
 
 import (
 	"bytes"
-  "strings"
 	"crypto/md5"
 	"encoding/base64"
-  "mime"
 	"encoding/json"
 	"fmt"
 	"github.com/garyburd/redigo/redis"
 	"github.com/hoisie/web"
 	"io"
 	"io/ioutil"
+	"mime"
 	"net/http"
+	"strings"
 )
 
 type Payload struct {
@@ -163,22 +163,22 @@ func gitJson(repo string, path string, v interface{}) interface{} {
 
 //this REALLY shouldn't be here, but mime.TypeByExtension isn't working
 func TypeByExtension(file string) string {
-  if strings.Contains(file, ".css") {
-    return "css"
-  } else if strings.Contains(file, ".jpg") {
-    return "jpg"
-  } else if strings.Contains(file, ".js") {
-    return "js"
-  } else if strings.Contains(file, ".png") {
-    return "png"
-  }
-  return "text/html"
+	if strings.Contains(file, ".css") {
+		return "css"
+	} else if strings.Contains(file, ".jpg") {
+		return "jpg"
+	} else if strings.Contains(file, ".js") {
+		return "js"
+	} else if strings.Contains(file, ".png") {
+		return "png"
+	}
+	return "text/html"
 }
 
 func main() {
-  //I shouldn't have to add an extesion, even if I do it still doesn't work
-  mime.AddExtensionType("css", "text/css")
-  mime.TypeByExtension("test.css")
+	//I shouldn't have to add an extesion, even if I do it still doesn't work
+	mime.AddExtensionType("css", "text/css")
+	mime.TypeByExtension("test.css")
 	clean()
 	install("gavinmyers/blog")
 	var repo = repository("gavinmyers/blog")
@@ -186,7 +186,7 @@ func main() {
 	var config Config
 	gitJson(repo, "marmot.json", &config)
 	web.Get("/(.*)", func(ctx *web.Context, val string) string {
-    ctx.ContentType(TypeByExtension(val))
+		ctx.ContentType(TypeByExtension(val))
 		return string(decode(gitFile(repo, val)))
 	})
 

@@ -68,16 +68,6 @@ func decode(str string) []byte {
 	return decBuf[0:n]
 }
 
-func _decode(str string, v interface{}) interface{} {
-	enc := []byte(str)
-	e64 := base64.StdEncoding
-	maxDecLen := e64.DecodedLen(len(enc))
-	var decBuf = make([]byte, maxDecLen)
-	n, err := e64.Decode(decBuf, enc)
-	_ = err
-	return json.Unmarshal(decBuf[0:n], &v)
-}
-
 func open() redis.Conn {
 	r, err := redis.Dial("tcp", ":6379")
 	if err != nil {
@@ -185,9 +175,9 @@ func main() {
 	//get the marmot file
 	var config Config
 	gitJson(repo, "marmot.json", &config)
-	//web.Get("/(.*)", func(val string) string {
-	//		return decodeStr(gitFile(repo, val))
-	//	})
+	web.Get("/(.*)", func(val string) string {
+			return string(decode(gitFile(repo, val)))
+	})
 	web.Post("/(.*)", func(ctx *web.Context, name string) string {
 		var payload Payload
 		json.Unmarshal([]byte(ctx.Params["payload"]), &payload)
@@ -195,10 +185,4 @@ func main() {
 		return ""
 	})
 	web.Run(config.Url)
-	//http.ListenAndServe("unstable.gavinm.com:8080", nil)
-}
-func GitHandler(w http.ResponseWriter, r *http.Request) {
-}
-
-func NilHandler(w http.ResponseWriter, r *http.Request) {
 }

@@ -63,16 +63,12 @@ func decode(str string) []byte {
 	e64 := base64.StdEncoding
 	maxDecLen := e64.DecodedLen(len(enc))
 	var decBuf = make([]byte, maxDecLen)
-	n, err := e64.Decode(decBuf, enc)
-	_ = err
+	n, _ := e64.Decode(decBuf, enc)
 	return decBuf[0:n]
 }
 
 func open() redis.Conn {
-	r, err := redis.Dial("tcp", ":6379")
-	if err != nil {
-		fmt.Println(err)
-	}
+	r, _ := redis.Dial("tcp", ":6379")
 	return r
 }
 
@@ -90,25 +86,16 @@ func install(site string) {
 
 func repository(site string) string {
 	var r = open()
-	surl, err := redis.String(r.Do("HGET", "sites", hash(site)))
-	if err != nil {
-		fmt.Println(err)
-	}
+	surl, _ := redis.String(r.Do("HGET", "sites", hash(site)))
 	return surl
 }
 
 func url(repo string, action string, v interface{}) interface{} {
 	var r = open()
 
-	client_id, err := redis.String(r.Do("GET", "client_id"))
-	if err != nil {
-		fmt.Println(err)
-	}
+	client_id, _ := redis.String(r.Do("GET", "client_id"))
 
-	client_secret, err := redis.String(r.Do("GET", "client_secret"))
-	if err != nil {
-		fmt.Println(err)
-	}
+	client_secret, _ := redis.String(r.Do("GET", "client_secret"))
 
 	var buffer bytes.Buffer
 	buffer.WriteString("https://api.github.com/repos/")
@@ -119,18 +106,9 @@ func url(repo string, action string, v interface{}) interface{} {
 	buffer.WriteString(client_id)
 	buffer.WriteString("&client_secret=")
 	buffer.WriteString(client_secret)
-	res, err := http.Get(buffer.String())
-	if err != nil {
-		fmt.Println("url")
-		fmt.Println(err)
-	}
+	res, _ := http.Get(buffer.String())
 	defer res.Body.Close()
-	body, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		fmt.Println("url")
-		fmt.Println(err)
-	}
-	fmt.Println(string(body))
+	body, _ := ioutil.ReadAll(res.Body)
 	return json.Unmarshal(body, &v)
 }
 
@@ -144,18 +122,13 @@ func gitFile(repo string, path string) string {
 	var buffer bytes.Buffer
 	buffer.WriteString(hash(repo))
 	buffer.WriteString(":content")
-	scontent, err := redis.String(r.Do("hget", buffer.String(), hash(path)))
+	scontent, _ := redis.String(r.Do("hget", buffer.String(), hash(path)))
 	r.Flush()
-	if err != nil {
-		fmt.Println(err)
-	}
 	if scontent != "" {
-		fmt.Println("scontent came back as " + scontent)
 		return scontent
 	} else {
 		var file GitFile
 		url(repo, path, &file)
-		fmt.Println(file)
 		r = open()
 		r.Send("hset", buffer.String(), hash(path), file.Content)
 		r.Flush()

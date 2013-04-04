@@ -189,10 +189,10 @@ func main() {
 	//		return decodeStr(gitFile(repo, val))
 	//	})
 	web.Post("/(.*)", func(ctx *web.Context, name string) string {
-    var payload Payload 
-	  json.Unmarshal([]byte(ctx.Params["payload"]), &payload)
-    fmt.Println(payload)
-    return ""
+		var payload Payload
+		json.Unmarshal([]byte(ctx.Params["payload"]), &payload)
+		fmt.Println(payload)
+		return ""
 	})
 	web.Run(config.Url)
 	//http.ListenAndServe("unstable.gavinm.com:8080", nil)

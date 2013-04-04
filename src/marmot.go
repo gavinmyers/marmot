@@ -5,13 +5,34 @@ import (
 	"crypto/md5"
 	"encoding/base64"
 	"encoding/json"
-  "net/http"
 	"fmt"
 	"github.com/garyburd/redigo/redis"
 	"github.com/hoisie/web"
 	"io"
 	"io/ioutil"
+	"net/http"
 )
+
+type Payload struct {
+	Before  string
+	After   string
+	Ref     string
+	Commits []struct {
+		Id        string
+		Message   string
+		Url       string
+		Timestamp string
+	}
+	Repository struct {
+		Owner struct {
+			Email string
+			Name  string
+		}
+		Description string
+		Name        string
+		Url         string
+	}
+}
 
 type GitFile struct {
 	Sha      string
@@ -37,17 +58,17 @@ func hash(in string) string {
 	return hsh
 }
 
-func decodeStr(str string) string {
+func decode(str string) []byte {
 	enc := []byte(str)
 	e64 := base64.StdEncoding
 	maxDecLen := e64.DecodedLen(len(enc))
 	var decBuf = make([]byte, maxDecLen)
 	n, err := e64.Decode(decBuf, enc)
 	_ = err
-	return string(decBuf[0:n])
+	return decBuf[0:n]
 }
 
-func decode(str string, v interface{}) interface{} {
+func _decode(str string, v interface{}) interface{} {
 	enc := []byte(str)
 	e64 := base64.StdEncoding
 	maxDecLen := e64.DecodedLen(len(enc))
@@ -119,7 +140,7 @@ func url(repo string, action string, v interface{}) interface{} {
 		fmt.Println("url")
 		fmt.Println(err)
 	}
-  fmt.Println(string(body))
+	fmt.Println(string(body))
 	return json.Unmarshal(body, &v)
 }
 
@@ -154,7 +175,7 @@ func gitFile(repo string, path string) string {
 }
 
 func gitJson(repo string, path string, v interface{}) interface{} {
-	return decode(gitFile(repo, path), &v)
+	return json.Unmarshal(decode(gitFile(repo, path)), &v)
 }
 
 func main() {
@@ -165,14 +186,16 @@ func main() {
 	var config Config
 	gitJson(repo, "marmot.json", &config)
 	//web.Get("/(.*)", func(val string) string {
-//		return decodeStr(gitFile(repo, val))
-//	})
-	web.Post("/(.*)",func(ctx *web.Context, name string) string { 
-    fmt.Println(ctx)
-    return "test"
+	//		return decodeStr(gitFile(repo, val))
+	//	})
+	web.Post("/(.*)", func(ctx *web.Context, name string) string {
+    var payload Payload 
+	  json.Unmarshal([]byte(ctx.Params["payload"]), &payload)
+    fmt.Println(payload)
+    return ""
 	})
 	web.Run(config.Url)
-  //http.ListenAndServe("unstable.gavinm.com:8080", nil)
+	//http.ListenAndServe("unstable.gavinm.com:8080", nil)
 }
 func GitHandler(w http.ResponseWriter, r *http.Request) {
 }

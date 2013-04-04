@@ -22,6 +22,9 @@ type Payload struct {
 		Message   string
 		Url       string
 		Timestamp string
+		Added     []string
+		Modified  []string
+		Removed   []string
 	}
 	Repository struct {
 		Owner struct {
@@ -112,27 +115,45 @@ func url(repo string, action string, v interface{}) interface{} {
 	return json.Unmarshal(body, &v)
 }
 
-func gitFile(repo string, path string) string {
+func pullFile(repo string, path string) string {
 	if path == "" {
 		path = "index.html"
 	}
 	path = "contents/" + path
+	fmt.Println(repo)
 	fmt.Println(path)
+	fmt.Println(hash(path))
+	var r = open()
+	var file GitFile
+	var buffer bytes.Buffer
+	buffer.WriteString(hash(repo))
+	buffer.WriteString(":content")
+	url(repo, path, &file)
+	r.Send("hset", buffer.String(), hash(path), file.Content)
+	r.Flush()
+	return file.Content
+}
+
+func memFile(repo string, path string) string {
+	if path == "" {
+		path = "index.html"
+	}
+	path = "contents/" + path
 	var r = open()
 	var buffer bytes.Buffer
 	buffer.WriteString(hash(repo))
 	buffer.WriteString(":content")
 	scontent, _ := redis.String(r.Do("hget", buffer.String(), hash(path)))
 	r.Flush()
+	return scontent
+}
+
+func gitFile(repo string, path string) string {
+	var scontent = memFile(repo, path)
 	if scontent != "" {
 		return scontent
 	} else {
-		var file GitFile
-		url(repo, path, &file)
-		r = open()
-		r.Send("hset", buffer.String(), hash(path), file.Content)
-		r.Flush()
-		return file.Content
+		return pullFile(repo, path)
 	}
 	return ""
 }
@@ -149,12 +170,23 @@ func main() {
 	var config Config
 	gitJson(repo, "marmot.json", &config)
 	web.Get("/(.*)", func(val string) string {
-			return string(decode(gitFile(repo, val)))
+		return string(decode(gitFile(repo, val)))
 	})
 	web.Post("/(.*)", func(ctx *web.Context, name string) string {
 		var payload Payload
+		var repo = repository("gavinmyers/blog")
 		json.Unmarshal([]byte(ctx.Params["payload"]), &payload)
-		fmt.Println(payload)
+		for _, commit := range payload.Commits {
+			for _, modified := range commit.Modified {
+				pullFile(repo, modified)
+			}
+			for _, removed := range commit.Removed {
+				pullFile(repo, removed)
+			}
+			for _, added := range commit.Added {
+				fmt.Println(added)
+			}
+		}
 		return ""
 	})
 	web.Run(config.Url)
